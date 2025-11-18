@@ -75,11 +75,13 @@ pub fn build(b: *std.Build) !void {
         .HAVE_LIBMBEDCRYPTO = true,
         .HAVE_HTONLL = is_mac or is_windows,
         .HAVE_NTOHLL = is_mac or is_windows,
-        .WITH_ZLIB = true,
+        .WITH_GEX = true,
+        .WITH_MBEDTLS = true,
         .WITH_SERVER = true,
+        .WITH_ZLIB = true,
     });
     libssh.addConfigHeader(config_header);
-
+    libssh.installConfigHeader(config_header);
     const version_header = b.addConfigHeader(.{
         .style = .{ .cmake = libssh_dep.path("include/libssh/libssh_version.h.cmake") },
         .include_path = "libssh/libssh_version.h",
@@ -89,6 +91,7 @@ pub fn build(b: *std.Build) !void {
         .libssh_VERSION_PATCH = @as(i64, @intCast(version.patch)),
     });
     libssh.addConfigHeader(version_header);
+    libssh.installConfigHeader(version_header);
     b.installArtifact(libssh);
 }
 
@@ -111,6 +114,8 @@ fn addCSourceFiles(b: *std.Build, mod: *std.Build.Module, src: std.Build.LazyPat
             "auth.c",
             "base64.c",
             "bignum.c",
+            "bind.c",
+            "bind_config.c",
             "buffer.c",
             "callbacks.c",
             "channels.c",
@@ -121,17 +126,25 @@ fn addCSourceFiles(b: *std.Build, mod: *std.Build.Module, src: std.Build.LazyPat
             "crypto_common.c",
             "curve25519.c",
             "dh.c",
+            "dh-gex.c",
+            "dh_key.c",
             "ecdh.c",
+            "ecdh_mbedcrypto.c",
             "error.c",
             "getpass.c",
+            "getrandom_mbedcrypto.c",
+            "gzip.c",
             "init.c",
             "kdf.c",
             "kex.c",
             "known_hosts.c",
             "knownhosts.c",
             "legacy.c",
+            "libmbedcrypto.c",
             "log.c",
             "match.c",
+            "mbedcrypto_missing.c",
+            "md_mbedcrypto.c",
             "messages.c",
             "misc.c",
             "options.c",
@@ -141,8 +154,12 @@ fn addCSourceFiles(b: *std.Build, mod: *std.Build.Module, src: std.Build.LazyPat
             "pcap.c",
             "pki.c",
             "pki_container_openssh.c",
+            "pki_ed25519.c",
+            "pki_ed25519_common.c",
+            "pki_mbedcrypto.c",
             "poll.c",
             "session.c",
+            "server.c",
             "scp.c",
             "socket.c",
             "string.c",
@@ -151,6 +168,11 @@ fn addCSourceFiles(b: *std.Build, mod: *std.Build.Module, src: std.Build.LazyPat
             "wrapper.c",
             "external/bcrypt_pbkdf.c",
             "external/blowfish.c",
+            "external/ed25519.c",
+            "external/fe25519.c",
+            "external/ge25519.c",
+            "external/sc25519.c",
+            "external/curve25519_ref.c",
             "config_parser.c",
             "token.c",
             "pki_ed25519_common.c",
@@ -160,7 +182,7 @@ fn addCSourceFiles(b: *std.Build, mod: *std.Build.Module, src: std.Build.LazyPat
 
     // threads
     mod.addCSourceFile(.{
-        .file = try src.join(b.allocator, "threads/noop.c"),
+        .file = try src.join(b.allocator, "threads/mbedtls.c"),
         .flags = flags,
     });
     if (getThreadsLib(mod.resolved_target.?.result)) |threads| mod.addCSourceFile(.{
