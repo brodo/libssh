@@ -1,9 +1,9 @@
 const std = @import("std");
 
 const Options = struct {
-    linkage: std.builtin.LinkMode = .static,
-    global_bind_config: []const u8 = "/etc/ssh/libssh_server_config",
-    global_client_config: []const u8 = "/etc/ssh/ssh_config",
+    linkage: std.builtin.LinkMode,
+    global_bind_config: []const u8,
+    global_client_config: []const u8,
 };
 
 const version: std.SemanticVersion = .{
